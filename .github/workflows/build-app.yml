@@ -30,27 +30,94 @@ jobs:
       - name: Install dependencies
         run: yarn install --ignore-engines
 
-      # ✅ FIX: Install react-native-windows that matches your RN version
-      - name: Install React Native Windows
+      # ✅ FIX: Detect React Native version and install matching react-native-windows
+      - name: Install compatible React Native Windows
         run: |
-          # This installs the version compatible with your installed react-native
-          yarn add react-native-windows --dev
-          yarn add @react-native-windows/cli --dev
+          # Get the installed react-native version
+          $rnVersion = node -p "require('./node_modules/react-native/package.json').version"
+          Write-Host "Detected React Native version: $rnVersion"
+          
+          # Extract major.minor version (e.g., "0.76" from "0.76.3")
+          $rnMajorMinor = $rnVersion -replace '^(\d+\.\d+).*', '$1'
+          Write-Host "Looking for react-native-windows@^$rnMajorMinor"
+          
+          # Try to install matching version, fallback to latest if not found
+          try {
+            yarn add "react-native-windows@^$rnMajorMinor" --dev --ignore-engines
+            yarn add "@react-native-windows/cli@^$rnMajorMinor" --dev --ignore-engines
+            Write-Host "✅ Installed react-native-windows@^$rnMajorMinor"
+          } catch {
+            Write-Host "⚠️ No matching version found. Installing latest..."
+            yarn add react-native-windows@latest --dev --ignore-engines
+            yarn add @react-native-windows/cli@latest --dev --ignore-engines
+          }
+        shell: pwsh
 
-      # ✅ Initialize Windows project
+      # ✅ Initialize Windows project with error handling
       - name: Add Windows project
-        run: npx react-native-windows-init --overwrite
+        run: |
+          try {
+            npx react-native-windows-init --overwrite --verbose
+            Write-Host "✅ Windows initialization successful"
+          } catch {
+            Write-Host "⚠️ Initialization failed, trying alternative approach..."
+            
+            # If auto-matching fails, manually specify version
+            $rnwVersion = node -p "require('./node_modules/react-native-windows/package.json').version"
+            Write-Host "Manually initializing with react-native-windows@$rnwVersion"
+            
+            npx react-native-windows-init --overwrite --version $rnwVersion --verbose
+          }
+        shell: pwsh
+        continue-on-error: false
 
-      # ✅ Build Windows app
+      # ✅ Verify Windows project exists before building
+      - name: Verify Windows project
+        run: |
+          if (Test-Path -Path "windows") {
+            Write-Host "✅ Windows directory exists"
+            Get-ChildItem windows
+          } else {
+            Write-Host "❌ Windows directory not found!"
+            exit 1
+          }
+        shell: pwsh
+
+      # ✅ Build Windows app with error handling
       - name: Build Windows app
-        run: npx react-native run-windows --release --arch x64
+        run: |
+          try {
+            npx react-native run-windows --release --arch x64 --no-deploy --logging
+            Write-Host "✅ Windows build successful"
+          } catch {
+            Write-Host "⚠️ Build failed, checking logs..."
+            if (Test-Path -Path "windows/msbuild.log") {
+              Get-Content windows/msbuild.log -Tail 100
+            }
+            throw
+          }
+        shell: pwsh
 
       # ✅ Upload the built Windows installer
       - name: Upload Windows installer
         uses: actions/upload-artifact@v4
         with:
           name: windows-exe
-          path: windows/AppPackages/**/*
+          path: |
+            windows/AppPackages/**/*
+            windows/**/Release/**/*.exe
+            windows/**/Release/**/*.msix
+        if: success()
+
+      # ✅ Upload build logs on failure
+      - name: Upload build logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-build-logs
+          path: |
+            windows/msbuild.log
+            windows/**/*.log
+        if: failure()
 
 
   # 🍎 iOS Build Job
