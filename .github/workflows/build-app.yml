@@ -14,16 +14,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js (use latest LTS for compatibility)
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
+
+      - name: Allow legacy peer deps (optional safety for older projects)
+        run: |
+          npm config set legacy-peer-deps true
+          yarn config set ignore-engines true
 
       - name: Install Yarn
         run: npm install -g yarn
 
       - name: Install dependencies
-        run: yarn install
+        run: yarn install --ignore-engines
 
       - name: Add Windows project
         run: npx react-native-windows-init --overwrite
@@ -41,22 +46,27 @@ jobs:
   # 🍎 iOS Build Job
   build-ios:
     runs-on: macos-latest
-    needs: build-windows  # optional, can run in parallel
+    needs: build-windows  # optional; remove if you want parallel builds
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js (same version for consistency)
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
+
+      - name: Allow legacy peer deps
+        run: |
+          npm config set legacy-peer-deps true
+          yarn config set ignore-engines true
 
       - name: Install EAS CLI
         run: npm install -g eas-cli
 
       - name: Install dependencies
-        run: yarn install
+        run: yarn install --ignore-engines
 
       - name: Log in to Expo
         env:
@@ -67,4 +77,4 @@ jobs:
         run: eas build -p ios --profile production --non-interactive
 
       - name: Upload iOS build info
-        run: echo "Check Expo Dashboard for your .ipa download link"
+        run: echo "✅ iOS build complete — check Expo Dashboard for your .ipa download link"
