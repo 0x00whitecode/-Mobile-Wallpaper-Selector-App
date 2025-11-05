@@ -14,7 +14,7 @@ I've set up everything you need to build a Windows .exe for your Wallpaper Studi
 ### Files Modified:
 1. ✅ **package.json** - Added Electron build scripts and configuration
 
----
+---A
 
 ## 🎯 Quick Start (3 Simple Steps)
 

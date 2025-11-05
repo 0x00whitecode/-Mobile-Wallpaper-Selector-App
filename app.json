@@ -8,85 +8,41 @@
     "scheme": "wallpaperapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.white-jeh.wallpaperapp"
+      "bundleIdentifier": "com.whitejeh.wallpaperapp"
     },
+
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "monochromeImage": "./assets/images/android-icon-monochrome.png",
+        "backgroundColor": "#E6F4FE"
       },
+      "icon": "./assets/images/icon.png",
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.white_jeh.wallpaperapp",
-      "permissions": [
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
-      ]
+      "permissions": ["READ_EXTERNAL_STORAGE", "WRITE_EXTERNAL_STORAGE"]
     },
-    "windows": {
-      "package": "com.whitejeh.wallpaperapp",
-      "certificateThumbprint": "",
-      "publisherDisplayName": "Wallpaper Studio"
-    },
+
     "web": {
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
+
     "plugins": [
       [
         "expo-font",
         {
           "fonts": [
-            "./assets/font/ClashDisplay_Complete/ClashDisplay-Regular.ttf",
-            "./assets/font/ClashDisplay_Complete/ClashDisplay-Bold.ttf",
-            "./assets/font/ClashDisplay_Complete/ClashDisplay-Medium.ttf",
-            "./assets/font/Lemon_Plus_Jakarta_Sans_Poppins_Raleway/Lemon-Regular.ttf",
-            "./assets/font/Lemon_Plus_Jakarta_Sans_Poppins_Raleway/PlusJakartaSans-Regular.ttf",
-            "./assets/font/Lemon_Plus_Jakarta_Sans_Poppins_Raleway/Poppins-Regular.ttf",
-            "./assets/font/Lemon_Plus_Jakarta_Sans_Poppins_Raleway/Raleway-Regular.ttf"
-          ],
-          "android": {
-            "fonts": [
-              {
-                "fontFamily": "ClashDisplay",
-                "fontDefinitions": [
-                  {
-                    "path": "./assets/font/ClashDisplay_Complete/ClashDisplay-Regular.ttf",
-                    "weight": 400
-                  },
-                  {
-                    "path": "./assets/font/ClashDisplay_Complete/ClashDisplay-Bold.ttf",
-                    "weight": 700
-                  }
-                ]
-              },
-              {
-                "fontFamily": "Poppins",
-                "fontDefinitions": [
-                  {
-                    "path": "./assets/font/Lemon_Plus_Jakarta_Sans_Poppins_Raleway/Poppins-Regular.ttf",
-                    "weight": 400
-                  },
-                  {
-                    "path": "./assets/font/Lemon_Plus_Jakarta_Sans_Poppins_Raleway/Poppins-Bold.ttf",
-                    "weight": 700
-                  }
-                ]
-              }
-            ]
-          },
-          "ios": {
-            "fonts": [
-              "./assets/font/ClashDisplay_Complete/ClashDisplay-Regular.ttf",
-              "./assets/font/ClashDisplay_Complete/ClashDisplay-Bold.ttf",
-              "./assets/font/Lemon_Plus_Jakarta_Sans_Poppins_Raleway/Poppins-Regular.ttf",
-              "./assets/font/Lemon_Plus_Jakarta_Sans_Poppins_Raleway/Poppins-Bold.ttf"
-            ]
-          }
+            "./assets/font/ClashDisplay_Complete/Fonts/TTF/ClashDisplay-Variable.ttf",
+            "./assets/font/Lemon,Plus_Jakarta_Sans,Poppins,Raleway/Lemon/Lemon-Regular.ttf",
+            "./assets/font/Lemon,Plus_Jakarta_Sans,Poppins,Raleway/Poppins/Poppins-Regular.ttf",
+            "./assets/font/Lemon,Plus_Jakarta_Sans,Poppins,Raleway/Poppins/Poppins-Bold.ttf"
+          ]
         }
       ],
       "expo-router",
@@ -103,9 +59,19 @@
         }
       ]
     ],
+
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "bcce5c9c-d7f5-4605-b553-ae1981a96e80"
+      }
+    },
+
+    "owner": "white_jeh"
   }
 }

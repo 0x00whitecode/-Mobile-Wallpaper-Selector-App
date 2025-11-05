@@ -1,0 +1,70 @@
+name: Build React Native App (Windows + iOS)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  # 🪟 Windows Build Job
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install Yarn
+        run: npm install -g yarn
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Add Windows project
+        run: npx react-native-windows-init --overwrite
+
+      - name: Build Windows app
+        run: npx react-native run-windows --release
+
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-exe
+          path: windows/AppPackages/
+
+
+  # 🍎 iOS Build Job
+  build-ios:
+    runs-on: macos-latest
+    needs: build-windows  # optional, can run in parallel
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install EAS CLI
+        run: npm install -g eas-cli
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Log in to Expo
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: eas whoami || eas login --token $EXPO_TOKEN
+
+      - name: Build iOS .ipa
+        run: eas build -p ios --profile production --non-interactive
+
+      - name: Upload iOS build info
+        run: echo "Check Expo Dashboard for your .ipa download link"
