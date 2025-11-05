@@ -41,35 +41,71 @@ jobs:
           $rnMajorMinor = $rnVersion -replace '^(\d+\.\d+).*', '$1'
           Write-Host "Looking for react-native-windows@^$rnMajorMinor"
           
-          # Try to install matching version, fallback to latest if not found
+          # Set error action preference to catch errors
+          $ErrorActionPreference = "Stop"
+          
+          # Try to install matching version
+          $installed = $false
           try {
-            yarn add "react-native-windows@^$rnMajorMinor" --dev --ignore-engines
-            yarn add "@react-native-windows/cli@^$rnMajorMinor" --dev --ignore-engines
-            Write-Host "✅ Installed react-native-windows@^$rnMajorMinor"
+            yarn add "react-native-windows@^$rnMajorMinor" --dev --ignore-engines 2>&1 | Tee-Object -Variable output
+            if ($LASTEXITCODE -eq 0) {
+              yarn add "@react-native-windows/cli@^$rnMajorMinor" --dev --ignore-engines
+              if ($LASTEXITCODE -eq 0) {
+                Write-Host "✅ Installed react-native-windows@^$rnMajorMinor"
+                $installed = $true
+              }
+            }
           } catch {
-            Write-Host "⚠️ No matching version found. Installing latest..."
-            yarn add react-native-windows@latest --dev --ignore-engines
-            yarn add @react-native-windows/cli@latest --dev --ignore-engines
+            Write-Host "⚠️ Error during installation: $_"
           }
+          
+          # If matching version failed, try latest
+          if (-not $installed -or $LASTEXITCODE -ne 0) {
+            Write-Host "⚠️ No matching version found for $rnMajorMinor. Installing latest..."
+            yarn add react-native-windows@latest --dev --ignore-engines
+            if ($LASTEXITCODE -ne 0) {
+              Write-Host "❌ Failed to install react-native-windows@latest"
+              exit 1
+            }
+            yarn add @react-native-windows/cli@latest --dev --ignore-engines
+            if ($LASTEXITCODE -ne 0) {
+              Write-Host "❌ Failed to install @react-native-windows/cli@latest"
+              exit 1
+            }
+            Write-Host "✅ Installed react-native-windows@latest"
+          }
+          
+          # Verify installation
+          $rnwVersion = node -p "require('./node_modules/react-native-windows/package.json').version"
+          Write-Host "Final react-native-windows version: $rnwVersion"
         shell: pwsh
 
       # ✅ Initialize Windows project with error handling
       - name: Add Windows project
         run: |
-          try {
-            npx react-native-windows-init --overwrite --verbose
-            Write-Host "✅ Windows initialization successful"
-          } catch {
-            Write-Host "⚠️ Initialization failed, trying alternative approach..."
+          $ErrorActionPreference = "Stop"
+          
+          Write-Host "Initializing Windows project..."
+          npx react-native-windows-init --overwrite --verbose 2>&1 | Tee-Object -Variable output
+          
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "⚠️ Standard initialization failed, trying alternative approach..."
             
             # If auto-matching fails, manually specify version
             $rnwVersion = node -p "require('./node_modules/react-native-windows/package.json').version"
             Write-Host "Manually initializing with react-native-windows@$rnwVersion"
             
             npx react-native-windows-init --overwrite --version $rnwVersion --verbose
+            
+            if ($LASTEXITCODE -ne 0) {
+              Write-Host "❌ Both initialization attempts failed"
+              Write-Host $output
+              exit 1
+            }
           }
+          
+          Write-Host "✅ Windows initialization successful"
         shell: pwsh
-        continue-on-error: false
 
       # ✅ Verify Windows project exists before building
       - name: Verify Windows project
@@ -86,30 +122,110 @@ jobs:
       # ✅ Build Windows app with error handling
       - name: Build Windows app
         run: |
-          try {
-            npx react-native run-windows --release --arch x64 --no-deploy --logging
-            Write-Host "✅ Windows build successful"
-          } catch {
-            Write-Host "⚠️ Build failed, checking logs..."
+          $ErrorActionPreference = "Stop"
+          
+          Write-Host "Building Windows app..."
+          npx react-native run-windows --release --arch x64 --no-deploy --logging 2>&1 | Tee-Object -Variable buildOutput
+          
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "❌ Build failed"
+            Write-Host "=== Last 100 lines of output ==="
+            Write-Host $buildOutput[-100..-1]
+            
             if (Test-Path -Path "windows/msbuild.log") {
+              Write-Host "=== MSBuild Log (last 100 lines) ==="
               Get-Content windows/msbuild.log -Tail 100
             }
-            throw
+            exit 1
+          }
+          
+          Write-Host "✅ Windows build successful"
+        shell: pwsh
+
+      # ✅ Find and display all build outputs
+      - name: Locate build outputs
+        run: |
+          Write-Host "=== Searching for build outputs ==="
+          
+          # Search for .exe files
+          Write-Host "`n📦 EXE files:"
+          Get-ChildItem -Path "windows" -Recurse -Filter "*.exe" -ErrorAction SilentlyContinue | ForEach-Object {
+            Write-Host "  Found: $($_.FullName)"
+            Write-Host "  Size: $([math]::Round($_.Length / 1MB, 2)) MB"
+          }
+          
+          # Search for .msix files
+          Write-Host "`n📦 MSIX packages:"
+          Get-ChildItem -Path "windows" -Recurse -Filter "*.msix" -ErrorAction SilentlyContinue | ForEach-Object {
+            Write-Host "  Found: $($_.FullName)"
+            Write-Host "  Size: $([math]::Round($_.Length / 1MB, 2)) MB"
+          }
+          
+          # Search for .appx files
+          Write-Host "`n📦 APPX packages:"
+          Get-ChildItem -Path "windows" -Recurse -Filter "*.appx" -ErrorAction SilentlyContinue | ForEach-Object {
+            Write-Host "  Found: $($_.FullName)"
+            Write-Host "  Size: $([math]::Round($_.Length / 1MB, 2)) MB"
+          }
+          
+          # List all Release directories
+          Write-Host "`n📁 Release directories:"
+          Get-ChildItem -Path "windows" -Recurse -Directory -Filter "Release" -ErrorAction SilentlyContinue | ForEach-Object {
+            Write-Host "  $($_.FullName)"
+            Get-ChildItem -Path $_.FullName -File | ForEach-Object {
+              Write-Host "    - $($_.Name) ($([math]::Round($_.Length / 1KB, 2)) KB)"
+            }
+          }
+          
+          # List AppPackages directory if it exists
+          if (Test-Path -Path "windows/AppPackages") {
+            Write-Host "`n📁 AppPackages contents:"
+            Get-ChildItem -Path "windows/AppPackages" -Recurse -File | ForEach-Object {
+              Write-Host "  $($_.FullName.Replace((Get-Location).Path + '\', ''))"
+            }
           }
         shell: pwsh
 
-      # ✅ Upload the built Windows installer
-      - name: Upload Windows installer
+      # ✅ Upload the built Windows installer - Multiple attempts to catch the .exe
+      - name: Upload Windows installer (AppPackages)
         uses: actions/upload-artifact@v4
         with:
-          name: windows-exe
+          name: windows-app-packages
           path: |
             windows/AppPackages/**/*
-            windows/**/Release/**/*.exe
-            windows/**/Release/**/*.msix
-        if: success()
+        if: always()
+        continue-on-error: true
 
-      # ✅ Upload build logs on failure
+      - name: Upload Windows installer (Release binaries)
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-release-binaries
+          path: |
+            windows/**/bin/x64/Release/**
+            windows/**/bin/Release/**
+        if: always()
+        continue-on-error: true
+
+      - name: Upload Windows installer (All executables)
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-executables
+          path: |
+            windows/**/*.exe
+            windows/**/*.msix
+            windows/**/*.appx
+        if: always()
+        continue-on-error: true
+
+      - name: Upload complete Windows folder (last resort)
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-complete-build
+          path: windows/
+          if-no-files-found: warn
+        if: always()
+
+      # ✅ Upload build logs
       - name: Upload build logs
         uses: actions/upload-artifact@v4
         with:
@@ -117,7 +233,7 @@ jobs:
           path: |
             windows/msbuild.log
             windows/**/*.log
-        if: failure()
+        if: always()
 
 
   # 🍎 iOS Build Job
