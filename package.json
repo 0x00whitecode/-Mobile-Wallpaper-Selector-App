@@ -9,8 +9,8 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "windows": "npx react-native run-windows",
-    "windows-release": "npx react-native run-windows --release --arch x64",
+    "windows": "npx @react-native-community/cli run-windows",
+    "windows-release": "react-native run-windows --release --arch x64",
     "test:windows": "jest --config jest.config.windows.js"
   },
   "dependencies": {
@@ -37,7 +37,7 @@
     "expo-web-browser": "~15.0.8",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "react-native": "^0.80.0",
+    "react-native": "0.81.5",
     "react-native-gesture-handler": "~2.28.0",
     "react-native-mmkv": "^4.0.0",
     "react-native-reanimated": "~4.1.1",
@@ -45,17 +45,22 @@
     "react-native-screens": "~4.16.0",
     "react-native-svg": "15.12.1",
     "react-native-web": "~0.21.0",
-    "react-native-windows": "^0.80.0",
     "react-native-worklets": "0.5.1"
   },
   "devDependencies": {
-    "@react-native-windows/cli": "^0.80.0",
     "@rnx-kit/jest-preset": "^0.1.17",
     "@types/react": "~19.1.0",
-    "@types/react-native": "^0.80.0",
+    "@types/react-native": "^0.72.8",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
     "typescript": "~5.9.2"
   },
-  "private": true
+  "private": true,
+  "react-native-windows": {
+    "init-windows": {
+      "name": "wallpaperapp",
+      "namespace": "wallpaperapp",
+      "template": "cpp-app"
+    }
+  }
 }
