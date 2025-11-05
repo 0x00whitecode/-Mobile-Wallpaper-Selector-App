@@ -14,28 +14,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js (use latest LTS for compatibility)
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'yarn'
 
-      - name: Allow legacy peer deps (optional safety for older projects)
+      - name: Configure npm and yarn
         run: |
           npm config set legacy-peer-deps true
           yarn config set ignore-engines true
 
-      - name: Install Yarn
-        run: npm install -g yarn
-
       - name: Install dependencies
-        run: yarn install --ignore-engines
+        run: yarn install --frozen-lockfile --ignore-engines
 
-      # ✅ Install React Native Windows CLI locally (not globally)
-      - name: Install React Native Windows CLI
-        run: yarn add @react-native-windows/cli --dev
-
-      # ✅ Add Windows project using npx (works with local packages)
-      - name: Add Windows project
+      # ✅ Add Windows project using npx
+      - name: Initialize Windows project
         run: npx react-native-windows-init --overwrite
 
       # ✅ Build Windows app
@@ -47,7 +41,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-exe
-          path: windows/AppPackages/
+          path: windows/AppPackages/**/*
+          if-no-files-found: warn
 
 
   # 🍎 iOS Build Job
@@ -59,12 +54,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js (same version for consistency)
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'yarn'
 
-      - name: Allow legacy peer deps
+      - name: Configure npm and yarn
         run: |
           npm config set legacy-peer-deps true
           yarn config set ignore-engines true
@@ -73,7 +69,7 @@ jobs:
         run: npm install -g eas-cli
 
       - name: Install dependencies
-        run: yarn install --ignore-engines
+        run: yarn install --frozen-lockfile --ignore-engines
 
       - name: Log in to Expo
         env:
