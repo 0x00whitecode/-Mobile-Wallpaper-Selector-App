@@ -38,13 +38,13 @@ jobs:
       - name: Install React Native Windows CLI
         run: yarn add @react-native-windows/cli --dev
 
-      # ✅ Add Windows project using the new CLI
+      # ✅ Add Windows project using the new CLI (use yarn exec instead of npx)
       - name: Add Windows project (new method)
-        run: npx @react-native-windows/cli init windows --overwrite
+        run: yarn react-native-windows-init --overwrite
 
       # ✅ Build Windows app
       - name: Build Windows app
-        run: npx react-native run-windows --release
+        run: yarn react-native run-windows --release
 
       # ✅ Upload the built Windows installer
       - name: Upload Windows installer
