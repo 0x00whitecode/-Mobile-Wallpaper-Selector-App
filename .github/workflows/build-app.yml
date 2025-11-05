@@ -30,21 +30,17 @@ jobs:
       - name: Install dependencies
         run: yarn install --ignore-engines
 
-      # ✅ Ensure React Native version compatible with Windows 0.80+
-      - name: Force compatible React Native version
-        run: yarn add react-native@0.80.0 --exact
-
-      # ✅ Install the new React Native Windows CLI globally
+      # ✅ Install React Native Windows CLI locally (not globally)
       - name: Install React Native Windows CLI
-        run: npm install -g @react-native-windows/cli
+        run: yarn add @react-native-windows/cli --dev
 
-      # ✅ Add Windows project using the correct command
-      - name: Add Windows project (new method)
-        run: react-native-windows-init --overwrite
+      # ✅ Add Windows project using npx (works with local packages)
+      - name: Add Windows project
+        run: npx react-native-windows-init --overwrite
 
       # ✅ Build Windows app
       - name: Build Windows app
-        run: npx react-native run-windows --release
+        run: npx react-native run-windows --release --arch x64
 
       # ✅ Upload the built Windows installer
       - name: Upload Windows installer
