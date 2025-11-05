@@ -34,17 +34,17 @@ jobs:
       - name: Force compatible React Native version
         run: yarn add react-native@0.80.0 --exact
 
-      # ✅ Install the new React Native Windows CLI
+      # ✅ Install the new React Native Windows CLI globally
       - name: Install React Native Windows CLI
-        run: yarn add @react-native-windows/cli --dev
+        run: npm install -g @react-native-windows/cli
 
-      # ✅ Add Windows project using the new CLI (use yarn exec instead of npx)
+      # ✅ Add Windows project using the correct command
       - name: Add Windows project (new method)
-        run: yarn react-native-windows-init --overwrite
+        run: react-native-windows-init --overwrite
 
       # ✅ Build Windows app
       - name: Build Windows app
-        run: yarn react-native run-windows --release
+        run: npx react-native run-windows --release
 
       # ✅ Upload the built Windows installer
       - name: Upload Windows installer
